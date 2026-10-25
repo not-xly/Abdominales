@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Abdominales">
+  <meta name="theme-color" content="#e4572e">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Abdominales</title>
+</head>
+<body>
+  <header class="top">
+    <h1>Abdominales</h1>
+    <p class="sub">Dom 25 oct – Sáb 31 oct 2026</p>
+  </header>
+
+  <section class="summary" aria-label="Resumen de la semana">
+    <div class="sum">
+      <span class="sum-label">Abdominales semana</span>
+      <span class="sum-value" id="sumAbsTxt">0 / 700</span>
+      <span class="badge" id="sumAbs">0%</span>
+    </div>
+    <div class="sum">
+      <span class="sum-label">Pesas semana</span>
+      <span class="sum-value" id="sumPesasTxt">0 / 56 series</span>
+      <span class="badge" id="sumPesas">0%</span>
+    </div>
+  </section>
+
+  <main id="days" class="days"></main>
+
+  <footer class="legend">Verde: 75 % o más · Rojo: menos del 75 %</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
