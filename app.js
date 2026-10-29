@@ -2,7 +2,6 @@
 const WEEK_START = { year: 2026, month: 10, day: 25 };
 const GOAL_ABS = 100;
 const GOAL_SERIES_PER_ARM = 4;
-const GOAL_SERIES = GOAL_SERIES_PER_ARM * 2;
 const GOOD_FROM = 75;
 const STORAGE_KEY = "abdominales-v1";
 
@@ -34,19 +33,19 @@ for (let i = 0; i < 7; i++) {
         <span class="name">Pesas</span>
         <span></span>
         <span class="goal">${GOAL_SERIES_PER_ARM} por brazo</span>
-        <span class="badge" data-pct="pesas">0%</span>
+        <span></span>
       </div>
       <div class="row">
         <span class="name indent">Izquierdo</span>
         <input type="number" inputmode="numeric" min="0" data-field="izq" aria-label="Series brazo izquierdo ${label}">
         <span class="goal">/ ${GOAL_SERIES_PER_ARM} series</span>
-        <span></span>
+        <span class="badge" data-pct="izq">0%</span>
       </div>
       <div class="row">
         <span class="name indent">Derecho</span>
         <input type="number" inputmode="numeric" min="0" data-field="der" aria-label="Series brazo derecho ${label}">
         <span class="goal">/ ${GOAL_SERIES_PER_ARM} series</span>
-        <span></span>
+        <span class="badge" data-pct="der">0%</span>
       </div>
     </article>`);
 }
@@ -107,7 +106,8 @@ function toCount(value) {
 function dayCounts(rec) {
   return {
     abs: Math.min(toCount(rec.abs), GOAL_ABS),
-    series: Math.min(toCount(rec.izq), GOAL_SERIES_PER_ARM) + Math.min(toCount(rec.der), GOAL_SERIES_PER_ARM),
+    izq: Math.min(toCount(rec.izq), GOAL_SERIES_PER_ARM),
+    der: Math.min(toCount(rec.der), GOAL_SERIES_PER_ARM),
   };
 }
 
@@ -122,23 +122,28 @@ function setBadge(el, value) {
 }
 
 function refreshDay(card) {
-  const { abs, series } = dayCounts(data[card.dataset.key] || {});
-  setBadge(card.querySelector('[data-pct="abs"]'), percent(abs, GOAL_ABS));
-  setBadge(card.querySelector('[data-pct="pesas"]'), percent(series, GOAL_SERIES));
+  const counts = dayCounts(data[card.dataset.key] || {});
+  setBadge(card.querySelector('[data-pct="abs"]'), percent(counts.abs, GOAL_ABS));
+  setBadge(card.querySelector('[data-pct="izq"]'), percent(counts.izq, GOAL_SERIES_PER_ARM));
+  setBadge(card.querySelector('[data-pct="der"]'), percent(counts.der, GOAL_SERIES_PER_ARM));
 }
 
 function refreshSummary() {
   let abs = 0;
-  let series = 0;
+  let izq = 0;
+  let der = 0;
   for (let i = 0; i < 7; i++) {
     const day = dayCounts(data[keyOf(dayAt(i))] || {});
     abs += day.abs;
-    series += day.series;
+    izq += day.izq;
+    der += day.der;
   }
   const goalAbs = GOAL_ABS * 7;
-  const goalSeries = GOAL_SERIES * 7;
+  const goalArm = GOAL_SERIES_PER_ARM * 7;
   document.getElementById("sumAbsTxt").textContent = `${abs} / ${goalAbs}`;
-  document.getElementById("sumPesasTxt").textContent = `${series} / ${goalSeries} series`;
+  document.getElementById("sumIzqTxt").textContent = `Izq ${izq} / ${goalArm}`;
+  document.getElementById("sumDerTxt").textContent = `Der ${der} / ${goalArm}`;
   setBadge(document.getElementById("sumAbs"), percent(abs, goalAbs));
-  setBadge(document.getElementById("sumPesas"), percent(series, goalSeries));
+  setBadge(document.getElementById("sumIzq"), percent(izq, goalArm));
+  setBadge(document.getElementById("sumDer"), percent(der, goalArm));
 }

@@ -50,6 +50,13 @@ body {
 .sum-label { font-size: 12px; color: var(--muted); }
 .sum-value { font-size: 15px; font-weight: 600; }
 .sum .badge { align-self: flex-start; margin-top: 2px; }
+.arm {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.arm .badge { margin-top: 0; min-width: 48px; }
 
 .days {
   padding: 12px 16px 8px;
