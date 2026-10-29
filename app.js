@@ -103,8 +103,16 @@ function toCount(value) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
+// Lo que pasa del máximo cuenta como 100 %: cada brazo se capa a 4 series y el día a 100.
+function dayCounts(rec) {
+  return {
+    abs: Math.min(toCount(rec.abs), GOAL_ABS),
+    series: Math.min(toCount(rec.izq), GOAL_SERIES_PER_ARM) + Math.min(toCount(rec.der), GOAL_SERIES_PER_ARM),
+  };
+}
+
 function percent(done, goal) {
-  return Math.round((done / goal) * 100);
+  return Math.min(100, Math.round((done / goal) * 100));
 }
 
 function setBadge(el, value) {
@@ -114,9 +122,7 @@ function setBadge(el, value) {
 }
 
 function refreshDay(card) {
-  const rec = data[card.dataset.key] || {};
-  const abs = toCount(rec.abs);
-  const series = toCount(rec.izq) + toCount(rec.der);
+  const { abs, series } = dayCounts(data[card.dataset.key] || {});
   setBadge(card.querySelector('[data-pct="abs"]'), percent(abs, GOAL_ABS));
   setBadge(card.querySelector('[data-pct="pesas"]'), percent(series, GOAL_SERIES));
 }
@@ -125,9 +131,9 @@ function refreshSummary() {
   let abs = 0;
   let series = 0;
   for (let i = 0; i < 7; i++) {
-    const rec = data[keyOf(dayAt(i))] || {};
-    abs += toCount(rec.abs);
-    series += toCount(rec.izq) + toCount(rec.der);
+    const day = dayCounts(data[keyOf(dayAt(i))] || {});
+    abs += day.abs;
+    series += day.series;
   }
   const goalAbs = GOAL_ABS * 7;
   const goalSeries = GOAL_SERIES * 7;
