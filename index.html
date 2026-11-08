@@ -14,14 +14,14 @@
 </head>
 <body>
   <header class="top">
-    <div>
+    <div class="top-row">
       <h1>Abdominales</h1>
-      <p class="sub" id="periodLabel"></p>
+      <div class="top-actions">
+        <button id="editBtn" class="ghost" type="button">Periodo</button>
+        <button id="resetBtn" class="ghost danger" type="button">Resetear</button>
+      </div>
     </div>
-    <div class="top-actions">
-      <button id="editBtn" class="ghost" type="button">Periodo</button>
-      <button id="resetBtn" class="ghost danger" type="button">Resetear</button>
-    </div>
+    <p class="sub" id="periodLabel"></p>
   </header>
 
   <section id="setup" class="setup" aria-label="Configurar periodo" hidden>
