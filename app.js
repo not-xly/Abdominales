@@ -143,7 +143,7 @@ function showTracking() {
 
   summaryEl.innerHTML = `
     <div class="sum-card">
-      <p class="sum-title">Resumen del periodo</p>
+      <p class="sum-title"></p>
       ${active.map((ex) => `
         <div class="sum-row">
           <span class="name">${ex.short}</span>
@@ -196,8 +196,15 @@ function refreshDay(card) {
   }
 }
 
+// Compara lo hecho hasta hoy con el objetivo acumulado hasta hoy, no con el periodo entero.
 function refreshSummary() {
-  const keys = periodDates().map(keyOf);
+  const dates = periodDates();
+  const today = keyOf(new Date());
+  const elapsed = dates.filter((date) => keyOf(date) <= today).length;
+  const keys = dates.slice(0, elapsed).map(keyOf);
+  summaryEl.querySelector(".sum-title").textContent = elapsed === 0
+    ? "El periodo aún no ha empezado"
+    : `Acumulado hasta ${fmtDay(dates[elapsed - 1])} · día ${elapsed} de ${dates.length}`;
   for (const ex of active) {
     const total = keys.reduce((sum, key) => {
       const rec = records[key] || {};
@@ -206,7 +213,7 @@ function refreshSummary() {
     const goal = ex.target * keys.length;
     summaryEl.querySelector(`[data-sum-txt="${ex.id}"]`).textContent =
       `${total} / ${goal}${ex.unit ? " " + ex.unit : ""}`;
-    setBadge(summaryEl.querySelector(`[data-sum-pct="${ex.id}"]`), percent(total, goal));
+    setBadge(summaryEl.querySelector(`[data-sum-pct="${ex.id}"]`), goal ? percent(total, goal) : null);
   }
 }
 
@@ -261,7 +268,13 @@ function percent(done, goal) {
   return Math.min(100, Math.round((done / goal) * 100));
 }
 
+// value null: todavía no hay objetivo acumulado; se muestra neutro.
 function setBadge(el, value) {
+  if (value === null) {
+    el.textContent = "–";
+    el.classList.remove("good", "bad");
+    return;
+  }
   el.textContent = `${value} %`;
   el.classList.toggle("good", value >= GOOD_FROM);
   el.classList.toggle("bad", value < GOOD_FROM);
