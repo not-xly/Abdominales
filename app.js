@@ -37,6 +37,15 @@ editBtn.addEventListener("click", showSetup);
 setupCancel.addEventListener("click", showTracking);
 resetBtn.addEventListener("click", resetAll);
 
+// Al tocar una celda numérica se selecciona su contenido: lo que se escribe reemplaza el valor, sin borrar antes.
+for (const root of [daysEl, setupForm]) {
+  root.addEventListener("focusin", (event) => {
+    if (event.target.matches('input[type="number"]')) {
+      setTimeout(() => event.target.select(), 0);
+    }
+  });
+}
+
 setupForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const next = readSetup();
