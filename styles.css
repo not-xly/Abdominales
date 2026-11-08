@@ -71,20 +71,25 @@ button { font: inherit; cursor: pointer; }
 
 .dates {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
 }
 .dates label {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
   font-size: 13px;
   color: var(--muted);
 }
 input[type="date"] {
+  display: block;
   width: 100%;
+  min-width: 0;
   height: 44px;
   padding: 0 8px;
+  -webkit-appearance: none;
+  appearance: none;
   font-size: 16px;
   color: var(--ink);
   background: #fff;

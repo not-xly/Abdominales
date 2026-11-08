@@ -1,8 +1,8 @@
 // Ejercicios disponibles. El id es la clave con la que se guarda cada valor.
 const EXERCISES = [
-  { id: "abs", name: "Abdominales", short: "Abdominales", unit: "", target: 100 },
+  { id: "abs", name: "Abdominales", short: "Abdominales", unit: "uds", target: 100 },
   { id: "bici", name: "Bicicleta", short: "Bicicleta", unit: "min", target: 20 },
-  { id: "flex", name: "Flexiones", short: "Flexiones", unit: "", target: 20 },
+  { id: "flex", name: "Flexiones", short: "Flexiones", unit: "uds", target: 20 },
   { id: "izq", name: "Pesas brazo izquierdo", short: "Pesas izq.", unit: "series", target: 4 },
   { id: "der", name: "Pesas brazo derecho", short: "Pesas der.", unit: "series", target: 4 },
 ];
@@ -79,8 +79,8 @@ function showSetup() {
       <div class="ex-option">
         <input type="checkbox" name="chosen" value="${ex.id}" id="chk-${ex.id}"${checked ? " checked" : ""}>
         <label for="chk-${ex.id}" class="ex-name">${ex.name}</label>
-        <input type="number" inputmode="numeric" min="1" name="target-${ex.id}" value="${target}" aria-label="Objetivo de ${ex.name}">
-        <span class="unit">${ex.unit || "reps"}</span>
+        <input type="number" inputmode="numeric" min="1" name="target-${ex.id}" value="" placeholder="${target}" aria-label="Objetivo de ${ex.name}">
+        <span class="unit">${ex.unit}</span>
       </div>`;
   }).join("");
   setupError.hidden = true;
@@ -117,7 +117,9 @@ function readSetup() {
   const chosen = [];
   const targets = {};
   for (const ex of EXERCISES) {
-    const target = parseInt(setupForm.elements[`target-${ex.id}`].value, 10);
+    // Vacío: se conserva el objetivo que se muestra en gris.
+    const field = setupForm.elements[`target-${ex.id}`];
+    const target = parseInt(field.value.trim() === "" ? field.placeholder : field.value, 10);
     const valid = Number.isFinite(target) && target > 0;
     if (setupForm.querySelector(`input[name="chosen"][value="${ex.id}"]`).checked) {
       if (!valid) return fail(`Pon un objetivo mayor que 0 para ${ex.name}.`);
@@ -206,9 +208,10 @@ function refreshSummary() {
     ? "El periodo aún no ha empezado"
     : `Acumulado hasta ${fmtDay(dates[elapsed - 1])} · día ${elapsed} de ${dates.length}`;
   for (const ex of active) {
+    // Total real acumulado (sin capar cada día); el porcentaje sí se capa a 100.
     const total = keys.reduce((sum, key) => {
       const rec = records[key] || {};
-      return sum + Math.min(toCount(rec[ex.id]), ex.target);
+      return sum + toCount(rec[ex.id]);
     }, 0);
     const goal = ex.target * keys.length;
     summaryEl.querySelector(`[data-sum-txt="${ex.id}"]`).textContent =
