@@ -37,6 +37,8 @@ button { font: inherit; cursor: pointer; }
 .top h1 { margin: 0; font-size: 24px; }
 .sub { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
 
+.top-actions { display: flex; gap: 8px; }
+
 .ghost {
   background: transparent;
   color: var(--ink);
@@ -45,6 +47,7 @@ button { font: inherit; cursor: pointer; }
   padding: 8px 14px;
   font-size: 15px;
 }
+.ghost.danger { color: var(--bad); border-color: var(--bad); }
 
 .primary {
   background: var(--accent);

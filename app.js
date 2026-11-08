@@ -17,7 +17,7 @@ const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "
 
 // records: { "2026-11-08": { abs: "100", izq: "4", ... } }
 // config: { start, end, chosen: [ids], targets: { id: n } } o null si aún no hay periodo.
-const records = loadJSON(RECORDS_KEY, {});
+let records = loadJSON(RECORDS_KEY, {});
 let config = loadJSON(CONFIG_KEY, null);
 let active = [];
 
@@ -27,6 +27,7 @@ const setupError = document.getElementById("setupError");
 const setupCancel = document.getElementById("setupCancel");
 const exerciseOptions = document.getElementById("exerciseOptions");
 const editBtn = document.getElementById("editBtn");
+const resetBtn = document.getElementById("resetBtn");
 const periodLabel = document.getElementById("periodLabel");
 const trackingEl = document.getElementById("tracking");
 const summaryEl = document.getElementById("summary");
@@ -34,6 +35,7 @@ const daysEl = document.getElementById("days");
 
 editBtn.addEventListener("click", showSetup);
 setupCancel.addEventListener("click", showTracking);
+resetBtn.addEventListener("click", resetAll);
 
 setupForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -86,6 +88,17 @@ function showSetup() {
   setupEl.hidden = false;
   trackingEl.hidden = true;
   editBtn.hidden = true;
+  resetBtn.hidden = true;
+}
+
+// Borra anotaciones y periodo, y vuelve al formulario inicial.
+function resetAll() {
+  if (!confirm("¿Borrar todas las anotaciones y el periodo, y empezar de nuevo?")) return;
+  records = {};
+  config = null;
+  localStorage.removeItem(RECORDS_KEY);
+  localStorage.removeItem(CONFIG_KEY);
+  showSetup();
 }
 
 // Devuelve la configuración leída del formulario, o null si hay un error (y lo muestra).
@@ -152,6 +165,7 @@ function showTracking() {
   setupEl.hidden = true;
   trackingEl.hidden = false;
   editBtn.hidden = false;
+  resetBtn.hidden = false;
 }
 
 function dayCard(date) {
