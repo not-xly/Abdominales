@@ -96,6 +96,7 @@ function showSetup() {
   setupCancel.hidden = !config;
   setupEl.hidden = false;
   trackingEl.hidden = true;
+  summaryEl.hidden = true;
   editBtn.hidden = true;
   resetBtn.hidden = true;
 }
@@ -175,6 +176,7 @@ function showTracking() {
 
   setupEl.hidden = true;
   trackingEl.hidden = false;
+  summaryEl.hidden = false;
   editBtn.hidden = false;
   resetBtn.hidden = false;
 }

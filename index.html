@@ -13,16 +13,19 @@
   <title>¡Con ritmo!</title>
 </head>
 <body>
-  <header class="top">
-    <div class="top-row">
-      <h1>¡Con ritmo!</h1>
-      <div class="top-actions">
-        <button id="editBtn" class="ghost" type="button">Periodo</button>
-        <button id="resetBtn" class="ghost danger" type="button">Resetear</button>
+  <div class="sticky-top">
+    <header class="top">
+      <div class="top-row">
+        <h1>¡Con ritmo!</h1>
+        <div class="top-actions">
+          <button id="editBtn" class="ghost" type="button">Periodo</button>
+          <button id="resetBtn" class="ghost danger" type="button">Resetear</button>
+        </div>
       </div>
-    </div>
-    <p class="sub" id="periodLabel"></p>
-  </header>
+      <p class="sub" id="periodLabel"></p>
+    </header>
+    <section id="summary" class="summary" aria-label="Resumen del periodo"></section>
+  </div>
 
   <section id="setup" class="setup" aria-label="Configurar periodo" hidden>
     <form id="setupForm">
@@ -44,7 +47,6 @@
   </section>
 
   <section id="tracking">
-    <section id="summary" class="summary" aria-label="Resumen del periodo"></section>
     <main id="days" class="days"></main>
   </section>
 
