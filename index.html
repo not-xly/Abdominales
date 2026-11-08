@@ -14,30 +14,36 @@
 </head>
 <body>
   <header class="top">
-    <h1>Abdominales</h1>
-    <p class="sub">Dom 25 oct – Sáb 31 oct 2026</p>
+    <div>
+      <h1>Abdominales</h1>
+      <p class="sub" id="periodLabel"></p>
+    </div>
+    <button id="editBtn" class="ghost" type="button">Periodo</button>
   </header>
 
-  <section class="summary" aria-label="Resumen de la semana">
-    <div class="sum">
-      <span class="sum-label">Abdominales semana</span>
-      <span class="sum-value" id="sumAbsTxt">0 / 700</span>
-      <span class="badge" id="sumAbs">0%</span>
-    </div>
-    <div class="sum">
-      <span class="sum-label">Pesas semana</span>
-      <div class="arm">
-        <span id="sumIzqTxt">Izq 0 / 28</span>
-        <span class="badge" id="sumIzq">0%</span>
+  <section id="setup" class="setup" aria-label="Configurar periodo" hidden>
+    <form id="setupForm">
+      <h2>Días del periodo</h2>
+      <div class="dates">
+        <label>Inicio <input type="date" name="start" required></label>
+        <label>Final <input type="date" name="end" required></label>
       </div>
-      <div class="arm">
-        <span id="sumDerTxt">Der 0 / 28</span>
-        <span class="badge" id="sumDer">0%</span>
+
+      <h2>Ejercicios y objetivo diario</h2>
+      <div id="exerciseOptions"></div>
+
+      <p id="setupError" class="error" hidden></p>
+      <div class="actions">
+        <button type="button" id="setupCancel" class="ghost">Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
       </div>
-    </div>
+    </form>
   </section>
 
-  <main id="days" class="days"></main>
+  <section id="tracking">
+    <section id="summary" class="summary" aria-label="Resumen del periodo"></section>
+    <main id="days" class="days"></main>
+  </section>
 
   <footer class="legend">Verde: 75 % o más · Rojo: menos del 75 %</footer>
 

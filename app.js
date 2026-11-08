@@ -1,71 +1,56 @@
-// Semana fija: domingo 25 oct 2026 a sábado 31 oct 2026 (mes en base 1).
-const WEEK_START = { year: 2026, month: 10, day: 25 };
-const GOAL_ABS = 100;
-const GOAL_SERIES_PER_ARM = 4;
+// Ejercicios disponibles. El id es la clave con la que se guarda cada valor.
+const EXERCISES = [
+  { id: "abs", name: "Abdominales", short: "Abdominales", unit: "", target: 100 },
+  { id: "bici", name: "Bicicleta", short: "Bicicleta", unit: "min", target: 20 },
+  { id: "flex", name: "Flexiones", short: "Flexiones", unit: "", target: 20 },
+  { id: "izq", name: "Pesas brazo izquierdo", short: "Pesas izq.", unit: "series", target: 4 },
+  { id: "der", name: "Pesas brazo derecho", short: "Pesas der.", unit: "series", target: 4 },
+];
 const GOOD_FROM = 75;
-const STORAGE_KEY = "abdominales-v1";
+const MAX_DAYS = 120;
+const RECORDS_KEY = "abdominales-v1";
+const CONFIG_KEY = "abdominales-config-v1";
 
 const DAY_NAMES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const DAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-const data = loadData();
+// records: { "2026-11-08": { abs: "100", izq: "4", ... } }
+// config: { start, end, chosen: [ids], targets: { id: n } } o null si aún no hay periodo.
+const records = loadJSON(RECORDS_KEY, {});
+let config = loadJSON(CONFIG_KEY, null);
+let active = [];
+
+const setupEl = document.getElementById("setup");
+const setupForm = document.getElementById("setupForm");
+const setupError = document.getElementById("setupError");
+const setupCancel = document.getElementById("setupCancel");
+const exerciseOptions = document.getElementById("exerciseOptions");
+const editBtn = document.getElementById("editBtn");
+const periodLabel = document.getElementById("periodLabel");
+const trackingEl = document.getElementById("tracking");
+const summaryEl = document.getElementById("summary");
 const daysEl = document.getElementById("days");
-const todayKey = keyOf(new Date());
 
-for (let i = 0; i < 7; i++) {
-  const date = dayAt(i);
-  const key = keyOf(date);
-  const isToday = key === todayKey;
-  const label = `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
-  daysEl.insertAdjacentHTML("beforeend", `
-    <article class="day${isToday ? " today" : ""}" data-key="${key}">
-      <header class="day-head">
-        <h2>${label}</h2>
-        ${isToday ? '<span class="hoy">Hoy</span>' : ""}
-      </header>
-      <div class="row">
-        <span class="name">Abdominales</span>
-        <input type="number" inputmode="numeric" min="0" data-field="abs" aria-label="Abdominales ${label}">
-        <span class="goal">/ ${GOAL_ABS}</span>
-        <span class="badge" data-pct="abs">0%</span>
-      </div>
-      <div class="row">
-        <span class="name">Pesas</span>
-        <span></span>
-        <span class="goal">${GOAL_SERIES_PER_ARM} por brazo</span>
-        <span></span>
-      </div>
-      <div class="row">
-        <span class="name indent">Izquierdo</span>
-        <input type="number" inputmode="numeric" min="0" data-field="izq" aria-label="Series brazo izquierdo ${label}">
-        <span class="goal">/ ${GOAL_SERIES_PER_ARM} series</span>
-        <span class="badge" data-pct="izq">0%</span>
-      </div>
-      <div class="row">
-        <span class="name indent">Derecho</span>
-        <input type="number" inputmode="numeric" min="0" data-field="der" aria-label="Series brazo derecho ${label}">
-        <span class="goal">/ ${GOAL_SERIES_PER_ARM} series</span>
-        <span class="badge" data-pct="der">0%</span>
-      </div>
-    </article>`);
-}
+editBtn.addEventListener("click", showSetup);
+setupCancel.addEventListener("click", showTracking);
 
-for (const card of daysEl.querySelectorAll(".day")) {
-  const rec = data[card.dataset.key] || {};
-  for (const input of card.querySelectorAll("input[data-field]")) {
-    input.value = rec[input.dataset.field] ?? "";
-  }
-  refreshDay(card);
-}
-refreshSummary();
+setupForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const next = readSetup();
+  if (!next) return;
+  config = next;
+  saveJSON(CONFIG_KEY, config);
+  showTracking();
+});
 
 daysEl.addEventListener("input", (event) => {
   const input = event.target;
   if (!input.matches("input[data-field]")) return;
   const card = input.closest(".day");
-  const rec = data[card.dataset.key] || (data[card.dataset.key] = {});
+  const rec = records[card.dataset.key] || (records[card.dataset.key] = {});
   rec[input.dataset.field] = input.value;
-  saveData();
+  saveJSON(RECORDS_KEY, records);
   refreshDay(card);
   refreshSummary();
 });
@@ -74,8 +59,163 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
 
-function dayAt(offset) {
-  return new Date(WEEK_START.year, WEEK_START.month - 1, WEEK_START.day + offset);
+if (config) {
+  showTracking();
+} else {
+  showSetup();
+}
+
+function showSetup() {
+  const start = config ? config.start : keyOf(new Date());
+  const end = config ? config.end : keyOf(addDays(new Date(), 6));
+  setupForm.elements.start.value = start;
+  setupForm.elements.end.value = end;
+  exerciseOptions.innerHTML = EXERCISES.map((ex) => {
+    const checked = !config || config.chosen.includes(ex.id);
+    const target = config?.targets?.[ex.id] ?? ex.target;
+    return `
+      <div class="ex-option">
+        <input type="checkbox" name="chosen" value="${ex.id}" id="chk-${ex.id}"${checked ? " checked" : ""}>
+        <label for="chk-${ex.id}" class="ex-name">${ex.name}</label>
+        <input type="number" inputmode="numeric" min="1" name="target-${ex.id}" value="${target}" aria-label="Objetivo de ${ex.name}">
+        <span class="unit">${ex.unit || "reps"}</span>
+      </div>`;
+  }).join("");
+  setupError.hidden = true;
+  setupCancel.hidden = !config;
+  setupEl.hidden = false;
+  trackingEl.hidden = true;
+  editBtn.hidden = true;
+}
+
+// Devuelve la configuración leída del formulario, o null si hay un error (y lo muestra).
+function readSetup() {
+  const { start, end } = setupForm.elements;
+  const fail = (msg) => {
+    setupError.textContent = msg;
+    setupError.hidden = false;
+    return null;
+  };
+  if (!start.value || !end.value) return fail("Elige el día de inicio y el de final.");
+  if (end.value < start.value) return fail("El final tiene que ser igual o posterior al inicio.");
+  const days = Math.round((parseKey(end.value) - parseKey(start.value)) / 86400000) + 1;
+  if (days > MAX_DAYS) return fail(`El periodo puede tener como máximo ${MAX_DAYS} días.`);
+
+  const chosen = [];
+  const targets = {};
+  for (const ex of EXERCISES) {
+    const target = parseInt(setupForm.elements[`target-${ex.id}`].value, 10);
+    const valid = Number.isFinite(target) && target > 0;
+    if (setupForm.querySelector(`input[name="chosen"][value="${ex.id}"]`).checked) {
+      if (!valid) return fail(`Pon un objetivo mayor que 0 para ${ex.name}.`);
+      chosen.push(ex.id);
+    }
+    targets[ex.id] = valid ? target : ex.target;
+  }
+  if (!chosen.length) return fail("Elige al menos un ejercicio.");
+  return { start: start.value, end: end.value, chosen, targets };
+}
+
+function showTracking() {
+  active = EXERCISES
+    .filter((ex) => config.chosen.includes(ex.id))
+    .map((ex) => ({ ...ex, target: config.targets[ex.id] }));
+
+  const dates = periodDates();
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  periodLabel.textContent = dates.length > 1
+    ? `${fmtDay(first)} – ${fmtDay(last)} ${last.getFullYear()}`
+    : `${fmtDay(first)} ${first.getFullYear()}`;
+
+  summaryEl.innerHTML = `
+    <div class="sum-card">
+      <p class="sum-title">Resumen del periodo</p>
+      ${active.map((ex) => `
+        <div class="sum-row">
+          <span class="name">${ex.short}</span>
+          <span class="sum-value" data-sum-txt="${ex.id}"></span>
+          <span class="badge" data-sum-pct="${ex.id}">0%</span>
+        </div>`).join("")}
+    </div>`;
+
+  daysEl.innerHTML = dates.map(dayCard).join("");
+  for (const card of daysEl.querySelectorAll(".day")) {
+    const rec = records[card.dataset.key] || {};
+    for (const input of card.querySelectorAll("input[data-field]")) {
+      input.value = rec[input.dataset.field] ?? "";
+    }
+    refreshDay(card);
+  }
+  refreshSummary();
+
+  setupEl.hidden = true;
+  trackingEl.hidden = false;
+  editBtn.hidden = false;
+}
+
+function dayCard(date) {
+  const key = keyOf(date);
+  const label = `${DAY_NAMES[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+  const isToday = key === keyOf(new Date());
+  const rows = active.map((ex) => `
+      <div class="row">
+        <span class="name">${ex.short}</span>
+        <input type="number" inputmode="numeric" min="0" data-field="${ex.id}" aria-label="${ex.name} ${label}">
+        <span class="goal">/ ${ex.target}${ex.unit ? " " + ex.unit : ""}</span>
+        <span class="badge" data-pct="${ex.id}">0%</span>
+      </div>`).join("");
+  return `
+    <article class="day${isToday ? " today" : ""}" data-key="${key}">
+      <header class="day-head">
+        <h2>${label}</h2>
+        ${isToday ? '<span class="hoy">Hoy</span>' : ""}
+      </header>${rows}
+    </article>`;
+}
+
+function refreshDay(card) {
+  const rec = records[card.dataset.key] || {};
+  for (const ex of active) {
+    const done = Math.min(toCount(rec[ex.id]), ex.target);
+    setBadge(card.querySelector(`[data-pct="${ex.id}"]`), percent(done, ex.target));
+  }
+}
+
+function refreshSummary() {
+  const keys = periodDates().map(keyOf);
+  for (const ex of active) {
+    const total = keys.reduce((sum, key) => {
+      const rec = records[key] || {};
+      return sum + Math.min(toCount(rec[ex.id]), ex.target);
+    }, 0);
+    const goal = ex.target * keys.length;
+    summaryEl.querySelector(`[data-sum-txt="${ex.id}"]`).textContent =
+      `${total} / ${goal}${ex.unit ? " " + ex.unit : ""}`;
+    setBadge(summaryEl.querySelector(`[data-sum-pct="${ex.id}"]`), percent(total, goal));
+  }
+}
+
+// Días del periodo, de inicio a final incluidos.
+function periodDates() {
+  const dates = [];
+  for (let d = parseKey(config.start); keyOf(d) <= config.end && dates.length < MAX_DAYS; d = addDays(d, 1)) {
+    dates.push(d);
+  }
+  return dates;
+}
+
+function fmtDay(date) {
+  return `${DAY_SHORT[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+function addDays(date, n) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
+}
+
+function parseKey(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function keyOf(date) {
@@ -84,16 +224,16 @@ function keyOf(date) {
   return `${date.getFullYear()}-${mm}-${dd}`;
 }
 
-function loadData() {
+function loadJSON(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
   } catch {
-    return {};
+    return fallback;
   }
 }
 
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function saveJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 // Lo que se escribe puede ser vacío o no numérico: cuenta como 0.
@@ -102,15 +242,7 @@ function toCount(value) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-// Lo que pasa del máximo cuenta como 100 %: cada brazo se capa a 4 series y el día a 100.
-function dayCounts(rec) {
-  return {
-    abs: Math.min(toCount(rec.abs), GOAL_ABS),
-    izq: Math.min(toCount(rec.izq), GOAL_SERIES_PER_ARM),
-    der: Math.min(toCount(rec.der), GOAL_SERIES_PER_ARM),
-  };
-}
-
+// Lo que pasa del objetivo cuenta como 100 %.
 function percent(done, goal) {
   return Math.min(100, Math.round((done / goal) * 100));
 }
@@ -119,31 +251,4 @@ function setBadge(el, value) {
   el.textContent = `${value} %`;
   el.classList.toggle("good", value >= GOOD_FROM);
   el.classList.toggle("bad", value < GOOD_FROM);
-}
-
-function refreshDay(card) {
-  const counts = dayCounts(data[card.dataset.key] || {});
-  setBadge(card.querySelector('[data-pct="abs"]'), percent(counts.abs, GOAL_ABS));
-  setBadge(card.querySelector('[data-pct="izq"]'), percent(counts.izq, GOAL_SERIES_PER_ARM));
-  setBadge(card.querySelector('[data-pct="der"]'), percent(counts.der, GOAL_SERIES_PER_ARM));
-}
-
-function refreshSummary() {
-  let abs = 0;
-  let izq = 0;
-  let der = 0;
-  for (let i = 0; i < 7; i++) {
-    const day = dayCounts(data[keyOf(dayAt(i))] || {});
-    abs += day.abs;
-    izq += day.izq;
-    der += day.der;
-  }
-  const goalAbs = GOAL_ABS * 7;
-  const goalArm = GOAL_SERIES_PER_ARM * 7;
-  document.getElementById("sumAbsTxt").textContent = `${abs} / ${goalAbs}`;
-  document.getElementById("sumIzqTxt").textContent = `Izq ${izq} / ${goalArm}`;
-  document.getElementById("sumDerTxt").textContent = `Der ${der} / ${goalArm}`;
-  setBadge(document.getElementById("sumAbs"), percent(abs, goalAbs));
-  setBadge(document.getElementById("sumIzq"), percent(izq, goalArm));
-  setBadge(document.getElementById("sumDer"), percent(der, goalArm));
 }
